@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { Configuration, OpenAIApi } = require('openai');
+const OpenAI = require('openai');
 const mongoose = require('mongoose');
 const flyersRouter = require('./routes/flyers');
 const templatesRouter = require('./routes/templates');
@@ -19,9 +19,9 @@ mongoose.connect(process.env.MONGODB_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-const openai = new OpenAIApi(new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-}));
+});
 
 const PORT = process.env.PORT || 5000;
 
@@ -36,7 +36,7 @@ app.post('/api/ai/suggest', async (req, res) => {
   }
   try {
     const prompt = `You are a professional graphic designer. Given the following flyer details, suggest a design style (Modern, Corporate, Vintage, Bold, Minimalist), a primary color (hex), and a font (Sans, Serif, Mono, Display, Modern).\n\nTitle: ${title}\nDescription: ${description}\n\nRespond in JSON: {\"style\":..., \"color\":..., \"font\":...}`;
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: 'You are a helpful assistant.' },
@@ -44,7 +44,7 @@ app.post('/api/ai/suggest', async (req, res) => {
       ],
       max_tokens: 150,
     });
-    const text = completion.data.choices[0].message.content;
+    const text = completion.choices[0].message.content;
     let suggestion;
     try {
       suggestion = JSON.parse(text);
